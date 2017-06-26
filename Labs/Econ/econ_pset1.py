@@ -92,7 +92,6 @@ bmatsim = np.zeros((T,3))
 bmatsim[0][0] = 0.8*b2_bar
 bmatsim[0][1] = 1.1*b3_bar
 bmatsim[0][2] = bmatsim[0][0] + bmatsim[0][1]
-print(bmatsim)
 
 def linearpath(K1,Kbar,bmat):
     bmat[0][2] = K1
@@ -108,8 +107,6 @@ def linearpath(K1,Kbar,bmat):
 
 #bmatreal = Matrix with only first row and column of K's
 bmatreal = linearpath(0.8*b2_bar + 1.1*b3_bar, K_bar, bmatsim)
-print(bmatreal)
-
 bmatcopy = np.array(bmatreal, copy=True)
 
 #rwmat are the r's and w's implied by Knoprime
@@ -123,8 +120,6 @@ def get_rwmat(L,params,bmat):
     return rwmat
 
 rwmat = get_rwmat(L,params,bmatreal)
-print(rwmat)
-
 
 def getEulErr_one(b3, *args):
     r1, r2, w1, w2, beta, sigma = args
@@ -141,16 +136,14 @@ def getEulErr_two(bvec, *args):
 
     return Eularray
 
-def getroot1(rwmat, beta, sigma, getEulErr):
+def getroot1(rwmat, beta, sigma, getEulErr_one):
     r1 = rwmat[0][0]
     r2 = rwmat[1][0]
     w1 = rwmat[0][1]
     w2 = rwmat[1][1]
     b_args_1 = r1, r2, w1, w2, beta, sigma
-    root1 = opt.root(getEulErr, 0.05, args=(b_args_1)).x
+    root1 = opt.root(getEulErr_one, 0.05, args=(b_args_1)).x
     return root1
-
-print(getroot1(rwmat, beta, sigma, getEulErr_one)) #b_3_2
 
 #Bmatsim it takes in is matrix with Knoprime
 def get_bmatsim(rwmat, bmatsim, b_3_2):
@@ -160,9 +153,9 @@ def get_bmatsim(rwmat, bmatsim, b_3_2):
 
     bmatsim[1][1] = b_3_2
     for i in range(1, len(bmatsim)-1):
-        b_args_2 = rwmat[i][0], rwmat[i+1][0], rwmat[i-1][1], rwmat[i][1], rwmat[i+1][1], beta, sigma
-        bmatsim[i][0] = opt.root(getEulErr_two, b_init, args=(b_args_2)).x[0]
-        bmatsim[i+1][1] = opt.root(getEulErr_two, b_init, args=(b_args_2)).x[1]
+        args = rwmat[i][0], rwmat[i+1][0], rwmat[i-1][1], rwmat[i][1], rwmat[i+1][1], beta, sigma
+        bmatsim[i][0] = opt.root(getEulErr_two, b_init, args=(args)).x[0]
+        bmatsim[i+1][1] = opt.root(getEulErr_two, b_init, args=(args)).x[1]
     bmatsim[len(bmatsim)-1][0] = b2_bar
     for i in range(0, len(bmatsim)):
         bmatsim[i][2] = bmatsim[i][0] + bmatsim[i][1]
@@ -173,7 +166,6 @@ def get_bmatsim(rwmat, bmatsim, b_3_2):
 #r's and w's that were in turn from Knoprime
 bmatsimfinal = get_bmatsim(rwmat,bmatsim,
                            getroot1(rwmat, beta, sigma, getEulErr_one))
-print(bmatsimfinal)
 Knoprime = column(bmatcopy,2)
 Knoprime_init = np.array(Knoprime, copy=True)
 Kprime = column(bmatsimfinal, 2)
@@ -189,11 +181,24 @@ while(difference > eps):
     bmatiter = np.c_[bmatiter, Knoprime]
     rwmatiter = get_rwmat(L,params,bmatiter)
     b_3_2 = getroot1(rwmatiter, beta, sigma, getEulErr_one)
+    b2_init = b2_bar
+    b3_init = b3_bar
     bmatsimiter = get_bmatsim(rwmatiter,bmatiter,b_3_2) #matrix of b2, b3, and Kprime
     Kprime = column(bmatsimiter, 2)
     difference = np.linalg.norm(Kprime - Knoprime)
 
+def get_cmat(rwmat,bmat):
+    cmat = np.zeros((31,2))
+    for i in range(0, len(bmatiter)-1):
+        cmat[i][0] = (1 + rwmat[i][0])*bmatiter[i][0] + rwmat[i][1] - bmatiter[i+1][1]
+        cmat[i][1] = (1 + rwmat[i][0])*bmatiter[i][1] + rwmat[i][1]
+    return cmat
+
+print("Final Savings Distribution", bmatiter) #Final Distribution of Saving
+print("Final Consumption Distribution", get_cmat(rwmatiter,bmatiter)) # Final Distribution of Consumption
+
+#Exercise 5.4
 plt.plot(Kprime)
 plt.plot(Knoprime_init)
 plt.savefig("K_path.png")
-print(bmatiter)
+print("From the plot, one can see that it takes the economy 6 periods to get within 0.0001 of the steady-state aggregate capital stock.")
