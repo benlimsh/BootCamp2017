@@ -77,4 +77,5 @@ def countvalid(filename):
 
     return count
 
+#Replace file directory for testing
 print(countvalid('/Users/benjaminlim/Documents/BootCamp2017/Labs/Computation/Week 1/cards5.txt'))
