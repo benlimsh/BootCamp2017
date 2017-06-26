@@ -33,8 +33,6 @@ def arithmagic():
 
     print(str(step_3) + " + " + str(step_4) + " = 1089 (ta-da!)")
 
-arithmagic()
-
 #Problem 2
 from random import choice
 def random_walk(max_iters=1e12):
@@ -46,61 +44,80 @@ def random_walk(max_iters=1e12):
         print ("Process completed.")
 
     except KeyboardInterrupt:
-        print ("Process interrupted at iteration", i, ".")
+        print ("Process interrupted at iteration.", i, ".")
 
     finally:
         return walk
 
-
 #Problem 3 and 4
 class ContentFilter():
     def __init__(self, name):
-        if (isinstance(name, str)):
-            self.name = name
+        if isinstance(name, str):
+            file_name = name + ".txt"
             with open(name, 'r') as myfile:
-                contents = myfile.readlines()
+                self.contents = myfile.readlines()
+                self.contents = [line.rstrip("\n") for line in self.contents]
+                self.name = name
         else:
             raise TypeError("Name must be a string.")
 
-    def uniform(self, name, case = "upper"):
-        with open(name, 'w') as outfile:
-            if case == "upper":
-                with open(name, 'r') as outfile:
-                    lines = outfile.readlines()
-                with open(name, 'w') as outfile:
-                    for line in lines:
-                        outfile.write(line.upper())
+    def uniform(self, name, mode = "w", case = "upper"):
+        if mode != "w" and mode != "a":
+            raise ValueError("Mode must be w or a.")
+        else:
+            file_name = name + ".txt"
+            with open(file_name, 'w') as outfile:
+                if case == "upper":
+                    for lines in self.contents:
+                        outfile.write(lines.upper() + "\n")
+                if case == "lower":
+                    for lines in self.contents:
+                        outfile.write(lines.lower() + "\n")
+                else:
+                    raise ValueError("Case must be upper or lower.")
 
-            if case == "lower":
-                with open(name, 'r') as outfile:
-                    lines = outfile.readlines()
-                with open(name, 'w') as outfile:
-                    for line in lines:
-                        outfile.write(line.lower())
-            else:
-                raise ValueError("Case must be upper or lower.")
+    def reverse(self, name, mode = "w", unit = "line"):
+        if mode != "w" and mode != "a":
+            raise ValueError("Mode must be w or a.")
+        else:
+            file_name = name + ".txt"
+            with open(file_name, mode) as outfile:
+                if unit == "word":
+                    for lines in self.contents:
+                        words = lines.split()
+                        reversewords = " ".join(words[::-1])
+                        outfile.write(reversewords + "\n")
+                elif unit == "line":
+                    for lines in self.contents[::-1]:
+                        outfile.write(lines + "\n")
+                else:
+                    raise ValueError("Unit must be word or line.")
 
-    def reverse(self, name, unit = "line"):
-        with open(name, 'w') as outfile:
-            if unit == "word":
-                with open(name, 'r') as outfile:
-                    lines = outfile.readlines()
-                with open(name, 'w') as outfile:
-                    for line in lines:
-                        for word in line.split():
-                            outfile.write(word[::-1])
+    def transpose(self, name, mode = "w"):
+        if mode != "w" and mode != "a":
+            raise ValueError("Mode must be w or a.")
+        file_name = name + ".txt"
+        length = len(self.contents[0].split()) #number of words in first row
+        for lines in self.contents:
+            if len(lines.split()) != length:
+                raise ValueError("Number of words in each line are not equal.")
+        with open(name, mode) as outfile:
+            for i in range(0, length):
+                words = [lines.split()[i] for lines in self.contents] #first word of each row
+                line = " ".join(words) #joins first word of each row into a new row of words
+                outfile.write(line + "\n")
 
-            if unit == "line":
-                with open(name, 'r') as outfile:
-                    lines = outfile.readlines()
-                with open(name, 'w') as outfile:
-                    for line in reversed(lines):
-                        outfile.write(line)
-            else:
-                raise ValueError("Unit must be word or line")
+    def __str__(self):
+        text = " ".join(self.contents)
+        charcount = len(text)
+        alphacount = sum(t.isalpha() for t in text)
+        numcount = sum(t.isdigit() for t in text)
+        spacecount = sum(t.isspace() for t in text)
+        linecount = len(self.contents)
 
-'''
-    def transpose(self, name):
-        pass
-
-'''
+        return "Source File: \t" + self.name  + ".txt" + \
+        "\nTotal Characters: \t" + str(charcount) + \
+        "\nAlphabetic Characters: \t" + str(alphacount) + \
+        "\nNumerical Characters: \t" + str(numcount) + \
+        "\nWhitespace Characters: \t" + str(spacecount) + \
+        "\nNumber of Lines: \t" + str(linecount)

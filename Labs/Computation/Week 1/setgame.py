@@ -46,20 +46,25 @@ def isvalid(set):
 #Returns the number of valid sets in a text file
 def countvalid(filename):
     stringarray = file_to_array(filename)
+    stringarraycopy = np.array(stringarray, copy=True)
+    for string in stringarraycopy:
+        if(len(list(string[0]))) != 4:
+            raise ValueError("Cards must contain only four digits")
+
     digitarray = stringarray_to_digitarray(stringarray) #digitarray is 12x4 matrix, need to check if array is valid
 
-    if np.unique(digitarray).size == len(digitarray):
+    uniquecount = len(np.vstack({tuple(row) for row in digitarray}))
+
+    if  uniquecount < len(digitarray):
         raise ValueError("Cards must be unique")
 
     if not len(digitarray) == 12:
         raise ValueError("There must be 12 cards")
 
-    for j in digitarray:
-        if not np.all(i ==0 or i == 1 or i == 2 for i in digitarray[j]):
-            raise ValueError("Card must contain only digits 0,1,2")
-
-    if not all(len(digitarray[i])==4 for i in digitarray):
-        raise ValueError("Cards must contain only four digits")
+    for j in range(0,len(digitarray)):
+        for i in digitarray[j]:
+            if i != 0 and i != 1 and i != 2:
+                raise ValueError("Card must contain only digits 0,1,2")
 
     else:
         iterlist = list(itertools.combinations(digitarray, 3))
@@ -72,6 +77,4 @@ def countvalid(filename):
 
     return count
 
-print(countvalid('/Users/benjaminlim/Desktop/OSM Lab/Prob Sets/Computation/Week 1/cards.txt'))
-
-#string.format for object oriented programming
+print(countvalid('/Users/benjaminlim/Documents/BootCamp2017/Labs/Computation/Week 1/cards5.txt'))

@@ -46,18 +46,8 @@ test_backpack()
 class Jetpack(Backpack):
 
     def __init__(self,name,color,max_size=2,fuel=10):
-        self.name = name
-        self.color = color
-        self.contents = []
-        self.max_size = max_size
+        Backpack.__init__(self,name,color,max_size)
         self.fuel = fuel
-        self.closed = True
-
-    def put(self, item):
-        Backpack.put(self, item)
-
-    def take(self, item):
-        Backpack.take(self, item)
 
     def fly(self, fuel):
         if self.fuel < fuel:
@@ -99,7 +89,7 @@ def test_jetpack():
 test_jetpack()
 
 #Problem 3
-class Backpack1(object):
+class Backpack(object):
 
     def __init__(self,name,color,max_size=5):
         self.name = name
@@ -121,18 +111,18 @@ class Backpack1(object):
 
     def __eq__(self,other):
         return (self.name == other.name and self.color == other.color and len(self.contents) == len(other.contents))
-'''
+
     def __str__(self):
-        print(" Owner:", '\t',self.name,'\n',
-              "Color:", '\t', self.color,'\n',
-              "Size:", '\t', '\t', len(self.contents),'\n',
-              "Max Size:", '\t', self.max_size,'\n',
-              "Contents:", '\t', self.contents,'\n')
-'''
+        return "Owner:\t\t"+ self.name + \
+        "\nColor:\t\t" + self.color + \
+        "\nSize:\t\t"+ str(len(self.contents)) + \
+        "\nMax Size: \t" + str(self.max_size) + "\nContents:\t" + \
+        str(self.contents)
+
 def test_magic():
-    magicpack = Backpack1("Johnny", "black")
-    otherpack1 = Backpack1("Jenny", "black")
-    otherpack2 = Backpack1("Johnny", "black")
+    magicpack = Backpack("Johnny", "black")
+    otherpack1 = Backpack("Jenny", "black")
+    otherpack2 = Backpack("Johnny", "black")
 
     print(magicpack==otherpack1)
     print(magicpack==magicpack)
