@@ -1,0 +1,281 @@
+import numpy as np
+from scipy import linalg as la
+from matplotlib import pyplot as plt
+
+#QR1 PROBLEM 1
+def modifiedgs(A):
+    A = A*1.0
+    n = A.shape[1]
+    Q = np.copy(A)
+    R = np.zeros((n,n))
+    for i in range(0,n):
+        R[i,i] = la.norm(Q[:,i])
+        Q[:,i] =  Q[:,i]/float(R[i,i])
+        for j in range(i+1, n):
+            R[i][j] = (Q[:,j].T)@(Q[:,i])
+            Q[:,j] = Q[:,j] - R[i][j]*(Q[:,i])
+    return Q,R
+
+A1 = np.matrix([[1., -1., 4.],[1, 4, -2],[1, 4, 2],[1, -1, 0]])
+Q1,R1 = la.qr(A1, mode = "economic")
+print("MY RESULT: ", modifiedgs(A1))
+print("SCIPY'S RESULT: ", Q1,R1)
+
+A2 = np.random.random((6,4))
+Q2,R2 = la.qr(A2, mode = "economic")
+print(A2.shape, Q2.shape, R2.shape)
+print(np.allclose(np.triu(R2), R2), np.allclose(np.dot(Q2.T, Q2), np.identity(4)), np.allclose(np.dot(Q2, R2), A2))
+
+#QR1 PROBLEM 2
+def det(A):
+    product = modifiedgs(A)[1][0,0]
+    for i in range (1, len(A)):
+        product = product * modifiedgs(A)[1][i,i]
+    return abs(product)
+
+A3 = np.random.random((3,3))
+print(np.allclose(det(A3),abs(np.linalg.det(A3))))
+
+#QR1 PROBLEM 3
+def solver(A,b):
+    Q = modifiedgs(A)[0]
+    R = modifiedgs(A)[1]
+    y = (Q.T)@b
+    n = len(y)
+    x = np.zeros((n,1))
+    x[n-1] = y[n-1] / R[n-1, n-1]
+    for row in range(n-2, -1, -1):
+        sums = y[row]
+        for j in range(row+1, n):
+            sums = sums - R[row,j] * x[j]
+        x[row] = sums / R[row,row]
+    return x
+
+b = np.array([1,2,3])
+print(solver(A3,b))
+print(np.linalg.solve(A3, b))
+
+#QR1 PROBLEM 4
+def fullqr(A):
+    A = A*1.0
+    sign = lambda x: 1 if x >= 0 else -1
+    m = A.shape[0]
+    n = A.shape[1]
+    R = np.copy(A)
+    Q = np.identity(m)
+    for k in range(0, n):
+        u = np.copy(R[k:,k])
+        u[0] = u[0] + sign(u[0])*la.norm(u)
+        u = u/la.norm(u)
+        R[k:,k:] = R[k:,k:] - 2 * np.outer(u, u.T) @ R[k:,k:]
+        Q[k:,:] = Q[k:,:] - 2 * np.outer(u, u.T) @ Q[k:,:]
+    return Q.T, R
+
+print("MY RESULT: ", fullqr(A3))
+print("SCIPY'S RESULT: ", la.qr(A3))
+
+#QR1 PROBLEM 5
+def hessenberg(A):
+    A = A*1.0
+    sign = lambda x: 1 if x >= 0 else -1
+    m = A.shape[0]
+    n = A.shape[1]
+    H = np.copy(A)
+    Q = np.identity(m)
+    for k in range(0, n-2):
+        u = np.copy(H[k+1:,k])
+        u[0] = u[0] + sign(u[0])*la.norm(u)
+        u = u/(la.norm(u))
+        H[k+1:,k:] = H[k+1:,k:] - (2 * np.outer(u, u.T) @ H[k+1:,k:])
+        H[:, k+1:] = H[:, k+1:] - (2 * H[:, k+1:] @ np.outer(u, u.T))
+        Q[k+1:, :] = Q[k+1:, :] - (2 * np.outer(u, u.T) @ Q[k+1:, :])
+    return H, Q.T
+
+A4 = np.matrix([[1., 2., 3.],[0, 1, 4],[5, 6, 0]])
+print("MY RESULT FOR H: ", hessenberg(A4)[0].round(2))
+print("SCIPY'S RESULT FOR Q.T: ", la.hessenberg(A4, calc_q = True)[0].round(2))
+print("MY RESULT FOR H: ", hessenberg(A4)[1].round(2))
+print("SCIPY'S RESULT FOR Q.T: ", la.hessenberg(A4, calc_q = True)[1].round(2))
+
+#QR2 PROBLEM 1
+def solver2(A,b):
+    Q, R = la.qr(A, mode = "economic")
+    return la.solve_triangular(R, (Q.T) @ b)
+
+A5 = np.matrix([[1., 2., 3.],[0, 1, 4],[5, 6, 0], [3, 9, -1], [4, 0, 0]])
+b = np.array([1, 4, 2, 3, -4])
+print("MY SOLUTION: ", solver2(A5, b))
+print("NUMPY'S SOLUTION: ", np.linalg.lstsq(A5,b)[0])
+
+#QR2 PROBLEM 2
+def f(x, xhat):
+    return xhat[0]*x + xhat[1]
+
+def f3(x, xhat):
+    return xhat[0]*(x**3) + xhat[1]*(x**2) + xhat[2]*(x**1) + xhat[3]
+
+def f6(x, xhat):
+    return xhat[0]*(x**6) + xhat[1]*(x**5) + xhat[2]*(x**4) + xhat[3]*(x**3) + xhat[4]*(x**2) + xhat[5]*x + xhat[6]
+
+def f9(x, xhat):
+    return xhat[0]*(x**9) + xhat[1]*(x**8) + xhat[2]*(x**7) + xhat[3]*(x**6) + xhat[4]*(x**5) + xhat[5]*(x**4) + xhat[6]*(x**3) + xhat[7]*(x**2) + xhat[8]*x + xhat[9]
+
+def f12(x, xhat):
+    return xhat[0]*(x**12) + xhat[1]*(x**11) + xhat[2]*(x**10) + xhat[3]*(x**9) + xhat[4]*(x**8) + xhat[5]*(x**7) + xhat[6]*(x**6) + xhat[7]*(x**5) + xhat[8]*(x**4) + xhat[9]*(x**3) + xhat[10]*(x**2) + xhat[11]*(x**1)+ xhat[12]
+
+def housing(A,b):
+    housing = np.load("housing.npy")
+    A = housing[:,0].reshape(len(housing),1)
+    ones = np.ones((len(housing), 1))
+    A = np.hstack((A,ones))
+    b = housing[:,1].reshape(len(housing),1)
+    xhat = solver2(A,b)
+    plt.scatter(A[:, 0], b)
+    x = np.arange(0,20,0.1)
+    plt.plot(x, f(x, xhat))
+    plt.title("Regression of Price Index on Year")
+    plt.xlabel("Year starting from 2000")
+    plt.ylabel("Price Index")
+    plt.show()
+    return
+
+housing(A5,b)
+
+#QR2 PROBLEM 3
+def housingpoly(A,b):
+    housing = np.load("housing.npy")
+    A = housing[:,0].reshape(len(housing),1)
+    ones = np.ones((len(housing), 1))
+    A = np.hstack((A,ones))
+    b = housing[:,1].reshape(len(housing),1)
+
+    A3 = np.vander(A[:, 0], 4)
+    xhat3 = la.lstsq(A3,b)[0]
+
+    A6 = np.vander(A[:, 0], 7)
+    xhat6 = la.lstsq(A6,b)[0]
+
+    A9 = np.vander(A[:, 0], 10)
+    xhat9 = la.lstsq(A9,b)[0]
+
+    A12 = np.vander(A[:, 0], 13)
+    xhat12 = la.lstsq(A12,b)[0]
+
+    x = np.linspace(0.0,16,10000)
+
+    plt.subplot(221)
+    plt.scatter(A[:, 0], b, s = 1, c = 'r')
+    plt.plot(x, f3(x, xhat3))
+    plt.xlim([0,20])
+    plt.ylim([0,250])
+
+    plt.subplot(222)
+    plt.scatter(A[:, 0], b, s = 1, c = 'g')
+    plt.plot(x, f6(x, xhat6))
+    plt.xlim([0,20])
+    plt.ylim([0,250])
+
+    plt.subplot(223)
+    plt.scatter(A[:, 0], b, s = 1 , c = 'b')
+    plt.plot(x, f9(x, xhat9))
+    plt.xlim([0,20])
+    plt.ylim([0,250])
+
+    plt.subplot(224)
+    plt.scatter(A[:, 0], b, s = 1, c = 'k')
+    plt.plot(x, f12(x, xhat12))
+    plt.xlim([0,20])
+    plt.ylim([0,250])
+
+
+    plt.show()
+
+    print("MY XHAT3: ", '\n',np.around(xhat3, 2), '\n', "NUMPY'S XHAT3: ", '\n',np.around(np.polyfit(A[:,0],b, 3),2))
+    print("MY XHAT6: ", '\n',np.around(xhat6, 2),'\n', "NUMPY'S XHAT6: ", '\n',np.around(np.polyfit(A[:,0],b, 6),2))
+    print("MY XHAT9: ", '\n',np.around(xhat9, 2), '\n',"NUMPY'S XHAT9: ", '\n',np.around(np.polyfit(A[:,0],b, 9),2))
+    print("MY XHAT12: ", '\n',np.around(xhat12, 2), '\n',"NUMPY'S XHAT12: ", '\n',np.around(np.polyfit(A[:,0],b, 12),2))
+
+    return
+
+housingpoly(A5,b)
+
+#QR2 PROBLEM 4
+def ellipse():
+    ellipse = np.load("ellipse.npy")
+    c1 = np.square(ellipse[:,0].reshape(len(ellipse),1))
+    c2 = ellipse[:,0].reshape(len(ellipse),1)
+    c3 = ellipse[:,0].reshape(len(ellipse),1)*ellipse[:,1].reshape(len(ellipse),1)
+    c4 = ellipse[:,1].reshape(len(ellipse),1)
+    c5 = np.square(ellipse[:,1].reshape(len(ellipse),1))
+    A = np.hstack((c1,c2,c3,c4,c5))
+    b = np.ones((len(ellipse), 1))
+    xhat = la.lstsq(A,b)[0]
+    return xhat
+
+xhat = ellipse()
+
+def plot_ellipse(a, b, c, d, e):
+    """Plot an ellipse of the form ax^2 + bx + cxy + dy + ey^2 = 1."""
+    ellipse = np.load("ellipse.npy")
+    plt.scatter(ellipse[:, 0], ellipse[:, 1])
+    theta = np.linspace(0, 2*np.pi, 200)
+    cos_t, sin_t = np.cos(theta), np.sin(theta)
+    A = a*(cos_t**2) + c*cos_t*sin_t + e*(sin_t**2)
+    B = b*cos_t + d*sin_t
+    r = (-B + np.sqrt(B**2 + 4*A))/(2*A)
+    plt.plot(r*cos_t, r*sin_t, lw=2)
+    plt.gca().set_aspect("equal", "datalim")
+    plt.show()
+
+plot_ellipse(xhat[0], xhat[1], xhat[2], xhat[3], xhat[4])
+
+#QR2 PROBLEM 5
+def dominant(A,N,tol):
+    m = A.shape[0]
+    n = A.shape[1]
+    x = np.random.random((n,1))
+    x = x/la.norm(x)
+    diff = 1
+    k = 0
+    while ((diff > tol) & (k < N)):
+        xnew = (A @ x)
+        xnew = xnew/la.norm(xnew)
+        diff = la.norm(xnew - x)
+        x = xnew.copy()
+        del(xnew)
+        k = k + 1
+
+    return x.T @ A @ x, x
+
+A6 = np.matrix([[1., 2., 3.],[4., 2., 1.],[7., 6., 9.]])
+print("SCIPY'S EIGENVALUES: ", la.eig(A6)[0])
+print("MY EIGENVALUES: ", dominant(A6, 3, 1e-5)[0])
+
+
+#QR2 PROBLEM 6
+def alleigen(A, N, tol):
+    m = A.shape[0]
+    n = A.shape[1]
+    S = la.hessenberg(A)
+    for k in range(0,N):
+        Q, R = la.qr(S)
+        S = R @ Q
+    eigs = []
+    i = 0
+    while i < n:
+        if i == n-1:
+            eigs.append(S[i,i])
+        elif abs(S[i+1,i]) < tol:
+            eigs.append(S[i,i])
+        else:
+            x1 = (- S[i,i+1] + cmath.sqrt(S[i,i+1]**2) - 4*S[i,i]*S[i+1,i])/(2*S[i,i])
+            x2 = (- S[i,i+1] - cmath.sqrt(S[i,i+1]**2) - 4*S[i,i]*S[i+1,i])/(2*S[i,i])
+            eigs.append(x1)
+            eigs.append(x2)
+            i = i + 1
+        i = i + 1
+    return eigs
+
+A7 = A6 + A6.T
+print("SCIPY'S EIGENVALUES: ", la.eig(A7)[0])
+print("MY EIGENVALUES: ", alleigen(A7,50,1e-5))
