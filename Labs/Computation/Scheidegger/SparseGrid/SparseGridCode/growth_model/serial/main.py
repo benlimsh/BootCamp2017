@@ -1,6 +1,6 @@
 #======================================================================
 #
-#     This routine solves an infinite horizon growth model 
+#     This routine solves an infinite horizon growth model
 #     with dynamic programming and sparse grids
 #
 #     The model is described in Scheidegger & Bilionis (2017)
@@ -38,54 +38,53 @@ def main(n_agents, iDepth, thetavec, pi):
     else:
         valnew.read("valnew_1." + str(numstart) + ".txt")  #write file to disk for restart
 
-    valold=TasmanianSG.TasmanianSparseGrid()
-    valold=valnew
+    valold0=TasmanianSG.TasmanianSparseGrid()
+    valold1=TasmanianSG.TasmanianSparseGrid()
+    valold2=TasmanianSG.TasmanianSparseGrid()
+    valold3=TasmanianSG.TasmanianSparseGrid()
+    valold4=TasmanianSG.TasmanianSparseGrid()
+
+    valold0.copyGrid(valnew)
+    valold1.copyGrid(valnew)
+    valold2.copyGrid(valnew)
+    valold3.copyGrid(valnew)
+    valold4.copyGrid(valnew)
+
+    valold = [valold0, valold1, valold2, valold3, valold4]
 
     for i in range(numstart, numits):
-        valnew = TasmanianSG.TasmanianSparseGrid()
+
         valnew0 = TasmanianSG.TasmanianSparseGrid()
         valnew1 = TasmanianSG.TasmanianSparseGrid()
         valnew2 = TasmanianSG.TasmanianSparseGrid()
         valnew3 = TasmanianSG.TasmanianSparseGrid()
         valnew4 = TasmanianSG.TasmanianSparseGrid()
-        
+
         valnew0 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[0])
         valnew1 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[1])
         valnew2 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[2])
         valnew3 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[3])
         valnew4 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[4])
-                
-        evalpoints = valnew2.getPoints()
-    
-        val0 = valnew0.evaluateBatch(evalpoints)[:,0]
-        print "val0", val0
-        val1 = valnew1.evaluateBatch(evalpoints)[:,0]
-        print "val1", val1
-        val2 = valnew2.evaluateBatch(evalpoints)[:,0]
-        print "val2", val2
-        val3 = valnew3.evaluateBatch(evalpoints)[:,0]
-        print "val3", val3
-        val4 = valnew4.evaluateBatch(evalpoints)[:,0]
-        print "val4", val4
-        
 
-        #take average of 5 grids
-        valmean = pi[0]*val0 + pi[1]*val1 + pi[2]*val2 + pi[3]*val3 + pi[4]*val4
-        valmean = np.reshape(valmean, (evalpoints.shape[0],1))
-        valold = TasmanianSG.TasmanianSparseGrid()
-        valold.copyGrid(valnew2)
-        valold.loadNeededPoints(valmean)
-        
-        valold.write("valnew_1." + str(i+1) + ".txt")
+        valold0.copyGrid(valnew0)
+        valold1.copyGrid(valnew1)
+        valold2.copyGrid(valnew2)
+        valold3.copyGrid(valnew3)
+        valold4.copyGrid(valnew4)
+
+        valold = [valold0, valold1, valold2, valold3, valold4]
+
+        for j in range(5):
+            valold[j].write("valnew_1." + str(i+1) + str(j) + ".txt")
 
     # compute errors
     avg_err=post.ls_error(n_agents, numstart, numits, No_samples)
 
     return avg_err
 
-print(main(2,2,thetavec,pi))
+print(main(2,2,thetavec))
 
-
+'''
 errlist = []
 for i in range(1,3):
     for j in range(2,4):
@@ -93,7 +92,7 @@ for i in range(1,3):
 
 print "Max and Avg Error: ", '\n'
 print "Agents: 1, Depth: 2", errlist[0], '\n'
-print "Agents: 1, Depth: 3", errlist[1], '\n'    
+print "Agents: 1, Depth: 3", errlist[1], '\n'
 print "Agents: 2, Depth: 2", errlist[2], '\n'
 print "Agents: 2, Depth: 3", errlist[3], '\n'
-
+'''

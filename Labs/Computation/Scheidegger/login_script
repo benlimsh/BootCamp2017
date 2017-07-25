@@ -1,0 +1,8 @@
+#!/bin/bash
+echo -e "What's your guest account number?: "
+read num
+cat > midway_login << EOF
+#!/bin/bash
+ssh -Y -i rccguest$num.key rccguest$num@midway.rcc.uchicago.edu
+EOF
+chmod 700 midway_login

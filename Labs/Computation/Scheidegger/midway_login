@@ -1,0 +1,2 @@
+#!/bin/bash
+ssh -Y -i rccguest0047.key rccguest0047@midway.rcc.uchicago.edu
