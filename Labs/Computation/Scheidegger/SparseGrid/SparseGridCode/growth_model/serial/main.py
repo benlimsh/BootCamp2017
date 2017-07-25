@@ -25,18 +25,19 @@ import TasmanianSG                            #sparse grid library
 import numpy as np
 
 #======================================================================
-def main(n_agents, iDepth, thetavec, pi):
+def main(n_agents, iDepth, thetavec):
     # Start with Value Function Iteration
 
     # terminal value function
+
     valnew=TasmanianSG.TasmanianSparseGrid()
     if (numstart==0):
         valnew=interpol.sparse_grid(n_agents, iDepth, theta = thetavec[2])
-        valnew.write("valnew_1." + str(numstart) + ".txt") #write file to disk for restart
+        valnew.write("valnew_1." + str(numstart) + ".txt") #write file to disk for restar
 
         # value function during iteration
     else:
-        valnew.read("valnew_1." + str(numstart) + ".txt")  #write file to disk for restart
+        valnew.read("valnew_1." + str(numstart) + ".txt")  #write file to disk for restar\
 
     valold0=TasmanianSG.TasmanianSparseGrid()
     valold1=TasmanianSG.TasmanianSparseGrid()
@@ -61,11 +62,20 @@ def main(n_agents, iDepth, thetavec, pi):
         valnew4 = TasmanianSG.TasmanianSparseGrid()
 
         valnew0 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[0])
+        evalpoints0 = valnew0.getPoints()
+        print "valnew0", valnew0.evaluateBatch(evalpoints0)[:,0]
         valnew1 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[1])
+        evalpoints1 = valnew1.getPoints()
+        print "valnew1", valnew1.evaluateBatch(evalpoints1)[:,0]
         valnew2 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[2])
+        evalpoints2 = valnew2.getPoints()
+        print "valnew2", valnew2.evaluateBatch(evalpoints2)[:,0]
         valnew3 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[3])
+        evalpoints3 = valnew3.getPoints()
+        print "valnew3", valnew3.evaluateBatch(evalpoints3)[:,0]
         valnew4 = interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, thetavec[4])
-
+        evalpoints4 = valnew4.getPoints()
+        print "valnew4", valnew4.evaluateBatch(evalpoints4)[:,0]
         valold0.copyGrid(valnew0)
         valold1.copyGrid(valnew1)
         valold2.copyGrid(valnew2)
@@ -76,7 +86,6 @@ def main(n_agents, iDepth, thetavec, pi):
 
         for j in range(5):
             valold[j].write("valnew_1." + str(i+1) + str(j) + ".txt")
-
     # compute errors
     avg_err=post.ls_error(n_agents, numstart, numits, No_samples)
 
@@ -88,7 +97,7 @@ print(main(2,2,thetavec))
 errlist = []
 for i in range(1,3):
     for j in range(2,4):
-        errlist.append(main(i,j,thetavec,pi))
+        errlist.append(main(i,j,thetavec))
 
 print "Max and Avg Error: ", '\n'
 print "Agents: 1, Depth: 2", errlist[0], '\n'
